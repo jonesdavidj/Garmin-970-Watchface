@@ -25,6 +25,7 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 # Create working directory
 WORKDIR /app
 
+<<<<<<< HEAD
 # Download and install Connect IQ SDK Manager
 RUN wget https://developer.garmin.com/downloads/connect-iq/sdk-manager/connectiq-sdk-manager-linux.zip -O sdk-manager.zip && \
     unzip sdk-manager.zip && \
@@ -34,6 +35,14 @@ RUN wget https://developer.garmin.com/downloads/connect-iq/sdk-manager/connectiq
 # Install the latest SDK using SDK Manager
 RUN ./connectiq-sdk-manager-linux --yes && \
     rm connectiq-sdk-manager-linux
+=======
+# Download and install Connect IQ SDK (cached layer)
+RUN wget https://developer.garmin.com/downloads/connect-iq/sdk-manager/connectiq-sdk-manager-linux.zip -O connectiq-sdk.zip && \
+    unzip connectiq-sdk.zip && \
+    rm connectiq-sdk.zip && \
+    mv connectiq-sdk-lin-* connectiq-sdk && \
+    chmod +x connectiq-sdk/bin/*
+>>>>>>> origin/jonesdavidj-patch-1
 
 # Set Connect IQ SDK environment variables
 ENV CIQ_HOME=/root/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin
