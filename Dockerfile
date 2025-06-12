@@ -25,19 +25,23 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 # Create working directory
 WORKDIR /app
 
-# Download and install Connect IQ SDK (cached layer)
-RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-4.2.4-2023-11-07-15cda8c.zip -O connectiq-sdk.zip && \
-    unzip connectiq-sdk.zip && \
-    rm connectiq-sdk.zip && \
-    mv connectiq-sdk-lin-* connectiq-sdk && \
-    chmod +x connectiq-sdk/bin/*
+# Download and install Connect IQ SDK Manager
+RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-manager-linux.zip -O sdk-manager.zip && \
+    unzip sdk-manager.zip && \
+    rm sdk-manager.zip && \
+    chmod +x connectiq-sdk-manager-linux
+
+# Install the latest SDK using SDK Manager
+RUN ./connectiq-sdk-manager-linux --yes && \
+    rm connectiq-sdk-manager-linux
 
 # Set Connect IQ SDK environment variables
-ENV CIQ_HOME=/app/connectiq-sdk
+ENV CIQ_HOME=/root/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin
 ENV PATH=$PATH:$CIQ_HOME/bin
 
 # Create a development key for local builds
-RUN cd $CIQ_HOME/bin && \
+RUN mkdir -p $CIQ_HOME/bin && \
+    cd $CIQ_HOME/bin && \
     openssl genrsa -out developer_key.pem 4096 && \
     openssl rsa -in developer_key.pem -outform DER -out developer_key.der
 
@@ -55,7 +59,7 @@ RUN echo 'alias ll="ls -la"' >> /root/.bashrc && \
 
 # Create build script for easy use
 RUN echo '#!/bin/bash\n\
-echo "=== Garmin Watch Face Build ==="\n\
+echo "=== Garmin Classic Watch Face Build ==="\n\
 cd /workspace\n\
 \n\
 # Check if project files exist\n\
