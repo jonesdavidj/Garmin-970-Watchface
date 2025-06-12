@@ -1,5 +1,20 @@
+# Build outputs
+build/
 *.prg
-*.bak
-*.log
-.idea/
+*.debug.xml
+
+# IDE files
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker
+.env

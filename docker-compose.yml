@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  garmin-dev:
+    build: .
+    container_name: garmin-watchface-dev
+    volumes:
+      - ./project:/workspace/tableau-analog-face
+      - ./output:/workspace/output
+    working_dir: /workspace/tableau-analog-face
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    environment:
+      - CIQ_HOME=/app/connectiq-sdk
+      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64

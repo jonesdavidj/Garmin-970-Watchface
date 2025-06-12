@@ -1,0 +1,215 @@
+name: Build Garmin Watch Face
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'source/**'
+      - 'resources/**'
+      - 'manifest.xml'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: false
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - release
+
+env:
+  WATCH_FACE_NAME: analog-face
+  CIQ_SDK_VERSION: "4.2.4"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Java 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Cache Connect IQ SDK
+      uses: actions/cache@v4
+      with:
+        path: ~/connectiq-sdk
+        key: connectiq-sdk-${{ env.CIQ_SDK_VERSION }}
+        restore-keys: |
+          connectiq-sdk-
+
+    - name: Download and Install Connect IQ SDK
+      run: |
+        if [ ! -d ~/connectiq-sdk ]; then
+          echo "Downloading Connect IQ SDK..."
+          wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-${{ env.CIQ_SDK_VERSION }}-2023-11-07-15cda8c.zip -O connectiq-sdk.zip
+          unzip connectiq-sdk.zip
+          mv connectiq-sdk-lin-* ~/connectiq-sdk
+          rm connectiq-sdk.zip
+        else
+          echo "Using cached Connect IQ SDK"
+        fi
+        
+        # Set permissions
+        chmod +x ~/connectiq-sdk/bin/*
+        
+        # Verify installation
+        ~/connectiq-sdk/bin/monkeyc --version
+
+    - name: Set up environment variables
+      run: |
+        echo "CIQ_HOME=$HOME/connectiq-sdk" >> $GITHUB_ENV
+        echo "$HOME/connectiq-sdk/bin" >> $GITHUB_PATH
+
+    - name: Validate project structure
+      run: |
+        echo "Checking project structure..."
+        ls -la
+        [ -f "manifest.xml" ] || { echo "manifest.xml not found!"; exit 1; }
+        [ -d "source" ] || { echo "source directory not found!"; exit 1; }
+        [ -d "resources" ] || { echo "resources directory not found!"; exit 1; }
+        echo "Project structure validated ✓"
+
+    - name: Generate version info
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.release_type }}" = "release" ]; then
+          VERSION=$(date +"%Y.%m.%d")
+          BUILD_TYPE="release"
+        else
+          VERSION=$(date +"%Y.%m.%d")-dev-$(echo ${{ github.sha }} | cut -c1-7)
+          BUILD_TYPE="development"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "build_type=$BUILD_TYPE" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION ($BUILD_TYPE)"
+
+    - name: Update manifest version
+      run: |
+        # Update version in manifest.xml
+        sed -i 's/version="[^"]*"/version="${{ steps.version.outputs.version }}"/' manifest.xml
+        echo "Updated manifest version to: ${{ steps.version.outputs.version }}"
+
+    - name: Build Watch Face
+      run: |
+        echo "Building ${{ env.WATCH_FACE_NAME }} for Forerunner 970..."
+        
+        # Create output directory
+        mkdir -p build/output
+        
+        # Build the watch face
+        $CIQ_HOME/bin/monkeyc \
+          --output build/output/${{ env.WATCH_FACE_NAME }}.prg \
+          --manifest manifest.xml \
+          --sdk $CIQ_HOME \
+          --device fr970 \
+          --warn \
+          --private-key $CIQ_HOME/bin/developer_key.der \
+          source/*.mc
+        
+        # Verify build output
+        if [ -f "build/output/${{ env.WATCH_FACE_NAME }}.prg" ]; then
+          echo "✓ Build successful!"
+          ls -la build/output/
+        else
+          echo "✗ Build failed!"
+          exit 1
+        fi
+
+    - name: Generate build info
+      run: |
+        cat > build/output/build-info.txt << EOF
+        Analog Watch Face - Build Information
+        ============================================
+        
+        Version: ${{ steps.version.outputs.version }}
+        Build Type: ${{ steps.version.outputs.build_type }}
+        Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        Git Commit: ${{ github.sha }}
+        Git Branch: ${{ github.ref_name }}
+        
+        Target Device: Garmin Forerunner 970
+        SDK Version: ${{ env.CIQ_SDK_VERSION }}
+        
+        Installation Instructions:
+        1. Connect your Forerunner 970 to your computer
+        2. Copy '${{ env.WATCH_FACE_NAME }}.prg' to GARMIN/APPS folder
+        3. Safely disconnect your watch
+        4. Go to Settings > Watch Face and select 'Tableau Analog'
+        
+        Features:
+        - Analog watch face with classic inspired design
+        - Black and white color scheme
+        - Date, steps, heart rate, body battery indicators
+        - Exercise readiness and VO2 Max display
+        - Battery level indicator
+        EOF
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: garmin-watch-face-${{ steps.version.outputs.version }}
+        path: |
+          build/output/${{ env.WATCH_FACE_NAME }}.prg
+          build/output/build-info.txt
+        retention-days: 30
+
+    - name: Create Release (on main branch)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: nalog Watch Face v${{ steps.version.outputs.version }}
+        body: |
+          ## Analog Watch Face
+          
+          **Version:** ${{ steps.version.outputs.version }}  
+          **Target Device:** Garmin Forerunner 970
+          
+          ### Features
+          - Clean analog design inspired bycClassic watchface design
+          - Black and white color scheme
+          - Comprehensive data display around the dial
+          - Date, steps, heart rate, body battery, exercise readiness, VO2 Max
+          
+          ### Installation
+          1. Download the `.prg` file below
+          2. Connect your Forerunner 970 to computer
+          3. Copy to `GARMIN/APPS` folder on your watch
+          4. Select the watch face in your watch settings
+          
+          ### Changes in this version
+          - Built from commit: ${{ github.sha }}
+          - Automated build via GitHub Actions
+        files: |
+          build/output/${{ env.WATCH_FACE_NAME }}.prg
+          build/output/build-info.txt
+        draft: false
+        prerelease: ${{ steps.version.outputs.build_type == 'development' }}
+
+  notify:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Notify build status
+      run: |
+        if [ "${{ needs.build.result }}" == "success" ]; then
+          echo "✅ Build completed successfully!"
+          echo "Watch face is ready for installation on Forerunner 970"
+        else
+          echo "❌ Build failed!"
+          echo "Check the logs above for error details"
+        fi
