@@ -26,7 +26,7 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 WORKDIR /app
 
 # Download and install Connect IQ SDK Manager
-RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-manager-linux.zip -O sdk-manager.zip && \
+RUN wget https://developer.garmin.com/downloads/connect-iq/sdk-manager/connectiq-sdk-manager-linux.zip -O sdk-manager.zip && \
     unzip sdk-manager.zip && \
     rm sdk-manager.zip && \
     chmod +x connectiq-sdk-manager-linux
