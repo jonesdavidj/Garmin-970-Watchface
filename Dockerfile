@@ -49,7 +49,8 @@ RUN cd $CIQ_HOME/bin && \
 RUN mkdir -p /workspace
 
 # Set working directory to workspace
-WORKDIR /workspace
+WORKDIR /workspace/analog-face
+COPY . /workspace/analog-face
 
 # Create useful aliases and environment setup
 RUN echo 'alias ll="ls -la"' >> /root/.bashrc && \

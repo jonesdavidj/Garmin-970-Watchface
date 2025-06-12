@@ -4,9 +4,9 @@ services:
   garmin-dev:
     build: .
     container_name: garmin-watchface-dev
-    volumes:
-      - ./project:/workspace/analog-face
-      - ./output:/workspace/output
+    #volumes:
+    #  - ./project:/workspace/analog-face
+    #  - ./output:/workspace/output
     working_dir: /workspace/analog-face
     stdin_open: true
     tty: true
