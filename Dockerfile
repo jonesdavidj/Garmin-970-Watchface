@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y unzip wget
 RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip
 RUN unzip connectiq-sdk.zip
 RUN ls -la
-RUN mv connectiq-sdk-lin-* connectiq-sdk
+RUN mv $(find . -maxdepth 1 -type d -name "connectiq-sdk-*") connectiq-sdk
 RUN chmod +x connectiq-sdk/bin/*
 RUN rm connectiq-sdk.zip
 
