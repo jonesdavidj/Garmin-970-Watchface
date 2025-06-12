@@ -55,10 +55,43 @@ export CIQ_HOME=/app/connectiq-sdk
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export PATH=$PATH:$CIQ_HOME/bin
 
+# Debug: Show environment
+echo "🔧 Environment check:"
+echo "CIQ_HOME: $CIQ_HOME"
+echo "JAVA_HOME: $JAVA_HOME"
+echo "PATH: $PATH"
+echo ""
+
+# Check if MonkeyC compiler exists and is executable
+if [ ! -f "$CIQ_HOME/bin/monkeyc" ]; then
+    echo "❌ Error: MonkeyC compiler not found at $CIQ_HOME/bin/monkeyc"
+    echo "Available files in $CIQ_HOME/bin/:"
+    ls -la $CIQ_HOME/bin/ || echo "Directory does not exist"
+    exit 1
+fi
+
+if [ ! -x "$CIQ_HOME/bin/monkeyc" ]; then
+    echo "❌ Error: MonkeyC compiler is not executable"
+    echo "Making it executable..."
+    chmod +x $CIQ_HOME/bin/monkeyc
+fi
+
+# Test MonkeyC compiler
+echo "🔍 Testing MonkeyC compiler..."
+$CIQ_HOME/bin/monkeyc --help > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "❌ Error: MonkeyC compiler failed to run"
+    echo "Trying to get version info..."
+    $CIQ_HOME/bin/monkeyc --version || echo "Version check also failed"
+    exit 1
+fi
+
 # Check if we're in the right directory
 if [ ! -f "manifest.xml" ]; then
     echo "❌ Error: manifest.xml not found"
-    echo "Please run this script from your project root directory"
+    echo "Current directory: $(pwd)"
+    echo "Contents:"
+    ls -la
     exit 1
 fi
 
@@ -90,23 +123,41 @@ fi
 echo "🔍 Checking project files..."
 if [ ! -f "source/AnalogueApp.mc" ]; then
     echo "❌ Error: source/AnalogueApp.mc not found"
+    echo "Available source files:"
+    ls -la source/
     exit 1
 fi
 
 if [ ! -f "source/AnalogueView.mc" ]; then
     echo "❌ Error: source/AnalogueView.mc not found"
+    echo "Available source files:"
+    ls -la source/
     exit 1
 fi
 
+echo "✅ All required files found"
+
+# Build the command as an array to avoid shell parsing issues
+MONKEYC_CMD=(
+    "$CIQ_HOME/bin/monkeyc"
+    "--typecheck"
+    "--manifest" "manifest.xml"
+    "--sdk" "$CIQ_HOME"
+    "--device" "fr970"
+    "--warn"
+)
+
+# Add source files
+for source_file in source/*.mc; do
+    if [ -f "$source_file" ]; then
+        MONKEYC_CMD+=("$source_file")
+    fi
+done
+
 # Validate code first
 echo "✅ Validating code..."
-monkeyc \
-    --typecheck \
-    --manifest manifest.xml \
-    --sdk $CIQ_HOME \
-    --device fr970 \
-    --warn \
-    source/*.mc
+echo "Running: ${MONKEYC_CMD[*]}"
+"${MONKEYC_CMD[@]}"
 
 if [ $? -ne 0 ]; then
     echo "❌ Code validation failed!"
@@ -124,14 +175,27 @@ fi
 
 # Build the watch face
 echo "🔨 Building watch face..."
-monkeyc \
-    --output build/analog-face.prg \
-    --manifest manifest.xml \
-    --sdk $CIQ_HOME \
-    --device fr970 \
-    --warn \
-    --private-key $CIQ_HOME/bin/developer_key.der \
-    source/*.mc
+
+# Build command
+BUILD_CMD=(
+    "$CIQ_HOME/bin/monkeyc"
+    "--output" "build/analog-face.prg"
+    "--manifest" "manifest.xml"
+    "--sdk" "$CIQ_HOME"
+    "--device" "fr970"
+    "--warn"
+    "--private-key" "$CIQ_HOME/bin/developer_key.der"
+)
+
+# Add source files
+for source_file in source/*.mc; do
+    if [ -f "$source_file" ]; then
+        BUILD_CMD+=("$source_file")
+    fi
+done
+
+echo "Running: ${BUILD_CMD[*]}"
+"${BUILD_CMD[@]}"
 
 if [ $? -eq 0 ]; then
     echo ""
