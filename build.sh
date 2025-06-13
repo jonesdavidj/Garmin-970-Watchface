@@ -140,9 +140,8 @@ echo "✅ All required files found"
 # Build the command as an array to avoid shell parsing issues
 MONKEYC_CMD=(
     "$CIQ_HOME/bin/monkeyc"
-    "--typecheck"
+    "--typecheck" "2"
     "--manifest" "manifest.xml"
-    "--sdk" "$CIQ_HOME"
     "--device" "fr970"
     "--warn"
 )
