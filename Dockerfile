@@ -17,6 +17,21 @@ RUN apt-get update && apt-get install -y \
     nano \
     htop \
     tree \
+    libsecret-1-0 \
+    libusb-1.0-0 \
+    libgtk-3-0 \
+    libxkbcommon0 \
+    libnss3 \
+    libglib2.0-0 \
+    libxcb1 \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo2 \    
     && rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME
@@ -39,6 +54,10 @@ RUN echo "SDK unzipped and organized."
 # Set Connect IQ SDK environment variables
 ENV CIQ_HOME=/app/connectiq-sdk
 ENV PATH=$PATH:$CIQ_HOME/bin
+
+RUN cd ${CIQ_HOME}/bin && \
+    ./connectiq --download-devices
+RUN echo "Devices downloaded for sdk"
 
 # Create a development key for local builds
 RUN cd $CIQ_HOME/bin && \
