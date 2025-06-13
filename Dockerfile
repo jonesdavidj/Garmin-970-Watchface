@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libcairo2 \
     libwebkit2gtk-4.1-0 \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME
@@ -40,9 +41,6 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 # Create working directory
 WORKDIR /app
-
-# Lets make sure first that we can unzip the Connect IQ SDK
-RUN apt-get update && apt-get install -y unzip wget
 
 # Download and install Connect IQ SDK (cached layer)
 RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip
@@ -77,6 +75,9 @@ RUN echo 'alias ll="ls -la"' >> /root/.bashrc && \
     echo 'alias build="monkeyc --output build/analog-face.prg --manifest manifest.xml --sdk \$CIQ_HOME --device fr970 --warn --private-key \$CIQ_HOME/bin/developer_key.der source/*.mc"' >> /root/.bashrc && \
     echo 'alias validate="monkeyc --typecheck --manifest manifest.xml --sdk \$CIQ_HOME --device fr970 source/*.mc"' >> /root/.bashrc && \
     echo 'export PS1="[Garmin Dev] \w $ "' >> /root/.bashrc
+
+RUN chmod +x /workspace/analog-face/connectiq-headless.sh
+RUN chmod +x build.sh
 
 # Keep container running
 CMD ["tail", "-f", "/dev/null"]
