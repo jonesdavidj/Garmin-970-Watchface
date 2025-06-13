@@ -40,13 +40,6 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable Ubuntu Focal (20.04) universe repo for legacy WebKitGTK
-RUN echo "deb http://archive.ubuntu.com/ubuntu focal main universe" > /etc/apt/sources.list.d/focal.list \
-    && apt-get update \
-    && apt-get install -y libwebkit2gtk-4.0-37 \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm /etc/apt/sources.list.d/focal.list
-
 # Symlinks to satisfy older Garmin SDK dependencies
 RUN ln -s /usr/lib/x86_64-linux-gnu/libwebp.so.7 /usr/lib/x86_64-linux-gnu/libwebp.so.6 && \
     ln -s /usr/lib/x86_64-linux-gnu/libenchant-2.so.2 /usr/lib/x86_64-linux-gnu/libenchant.so.1
@@ -83,8 +76,8 @@ COPY . /workspace/analog-face
 
 # Create useful aliases and environment setup
 RUN echo 'alias ll="ls -la"' >> /root/.bashrc && \
-    echo 'alias build="monkeyc --output build/analog-face.prg --manifest manifest.xml --sdk \$CIQ_HOME --device fr970 --warn --private-key \$CIQ_HOME/bin/developer_key.der source/*.mc"' >> /root/.bashrc && \
-    echo 'alias validate="monkeyc --typecheck --manifest manifest.xml --sdk \$CIQ_HOME --device fr970 source/*.mc"' >> /root/.bashrc && \
+    echo 'alias build="monkeyc --output build/analog-face.prg --manifest manifest.xml --device fr970 --device-path Devices/fr970 --fonts Fonts --warn --private-key \$CIQ_HOME/bin/developer_key.der source/*.mc"' >> /root/.bashrc && \
+    echo 'alias validate="monkeyc --typecheck --manifest manifest.xml --device fr970 --device-path Devices/fr970 source/*.mc"' >> /root/.bashrc && \
     echo 'export PS1="[Garmin Dev] \w $ "' >> /root/.bashrc
 
 # Wrapper script for headless simulator usage
