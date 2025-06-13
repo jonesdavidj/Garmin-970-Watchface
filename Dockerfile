@@ -31,7 +31,8 @@ RUN apt-get update && apt-get install -y \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libpangocairo-1.0-0 \
-    libcairo2 \    
+    libcairo2 \
+    libwebkit2gtk-4.1-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME
