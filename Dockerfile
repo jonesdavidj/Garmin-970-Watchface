@@ -32,9 +32,17 @@ RUN apt-get update && apt-get install -y \
     libatk-bridge2.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
-    libwebkit2gtk-4.1-0 \
+    libjpeg62 \
+    libopenjp2-7 \
+    libwebp7 \
+    libenchant-2-2 \
+    libnotify4 \
     xvfb \
     && rm -rf /var/lib/apt/lists/*
+
+# Symlinks to satisfy older Garmin SDK dependencies
+RUN ln -s /usr/lib/x86_64-linux-gnu/libwebp.so.7 /usr/lib/x86_64-linux-gnu/libwebp.so.6 && \
+    ln -s /usr/lib/x86_64-linux-gnu/libenchant-2.so.2 /usr/lib/x86_64-linux-gnu/libenchant.so.1
 
 # Set JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
@@ -43,20 +51,16 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 WORKDIR /app
 
 # Download and install Connect IQ SDK (cached layer)
-RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip
-RUN unzip connectiq-sdk.zip
-RUN mkdir connectiq-sdk && \
+RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip && \
+    unzip connectiq-sdk.zip && \
+    mkdir connectiq-sdk && \
     mv bin doc resources samples share connectiq-sdk/ && \
-    chmod +x connectiq-sdk/bin/*
-RUN echo "SDK unzipped and organized."
+    chmod +x connectiq-sdk/bin/* && \
+    rm connectiq-sdk.zip
 
 # Set Connect IQ SDK environment variables
 ENV CIQ_HOME=/app/connectiq-sdk
 ENV PATH=$PATH:$CIQ_HOME/bin
-
-#RUN cd ${CIQ_HOME}/bin && \
-#    ./connectiq --download-devices
-#RUN echo "Devices downloaded for sdk"
 
 # Create a development key for local builds
 RUN cd $CIQ_HOME/bin && \
@@ -75,6 +79,10 @@ RUN echo 'alias ll="ls -la"' >> /root/.bashrc && \
     echo 'alias build="monkeyc --output build/analog-face.prg --manifest manifest.xml --sdk \$CIQ_HOME --device fr970 --warn --private-key \$CIQ_HOME/bin/developer_key.der source/*.mc"' >> /root/.bashrc && \
     echo 'alias validate="monkeyc --typecheck --manifest manifest.xml --sdk \$CIQ_HOME --device fr970 source/*.mc"' >> /root/.bashrc && \
     echo 'export PS1="[Garmin Dev] \w $ "' >> /root/.bashrc
+
+# Wrapper script for headless simulator usage
+RUN echo '#!/bin/bash\nxvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" "$CIQ_HOME/bin/connectiq" "$@"' > /usr/local/bin/connectiq-headless && \
+    chmod +x /usr/local/bin/connectiq-headless
 
 RUN chmod +x /workspace/analog-face/connectiq-headless.sh
 RUN chmod +x build.sh
