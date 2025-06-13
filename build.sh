@@ -144,6 +144,7 @@ MONKEYC_CMD=(
     "--manifest" "manifest.xml"
     "--device" "fr970"
     "--warn"
+    "--output" "build/analog-face.dummy"
 )
 
 # Add source files
