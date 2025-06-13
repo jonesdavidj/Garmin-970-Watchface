@@ -55,9 +55,9 @@ RUN echo "SDK unzipped and organized."
 ENV CIQ_HOME=/app/connectiq-sdk
 ENV PATH=$PATH:$CIQ_HOME/bin
 
-RUN cd ${CIQ_HOME}/bin && \
-    ./connectiq --download-devices
-RUN echo "Devices downloaded for sdk"
+#RUN cd ${CIQ_HOME}/bin && \
+#    ./connectiq --download-devices
+#RUN echo "Devices downloaded for sdk"
 
 # Create a development key for local builds
 RUN cd $CIQ_HOME/bin && \
