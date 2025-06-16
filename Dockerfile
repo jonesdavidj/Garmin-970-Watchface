@@ -51,20 +51,23 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 # Create working directory
 WORKDIR /app
 
-# Download and install Connect IQ SDK (cached layer)
-RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip && \
-    unzip connectiq-sdk.zip && \
-    mkdir connectiq-sdk && \
-    mv bin doc resources samples share connectiq-sdk/ && \
-    chmod +x connectiq-sdk/bin/* && \
-    rm connectiq-sdk.zip
+# Download and install Connect IQ SDK Manager
+RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-manager-linux.zip -O sdk-manager.zip && \
+    unzip sdk-manager.zip && \
+    rm sdk-manager.zip && \
+    chmod +x connectiq-sdk-manager-linux
+
+# Install the latest SDK using SDK Manager
+RUN ./connectiq-sdk-manager-linux --yes && \
+    rm connectiq-sdk-manager-linux
 
 # Set Connect IQ SDK environment variables
-ENV CIQ_HOME=/app/connectiq-sdk
+ENV CIQ_HOME=/root/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin
 ENV PATH=$PATH:$CIQ_HOME/bin
 
 # Create a development key for local builds
-RUN cd $CIQ_HOME/bin && \
+RUN mkdir -p $CIQ_HOME/bin && \
+    cd $CIQ_HOME/bin && \
     openssl genrsa -out developer_key.pem 4096 && \
     openssl rsa -in developer_key.pem -outform DER -out developer_key.der
 
