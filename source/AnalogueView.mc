@@ -1,31 +1,31 @@
-using Toybox.WatchUi;
-using Toybox.Graphics;
-using Toybox.System;
-using Toybox.Lang;
-using Toybox.Time;
-using Toybox.Time.Gregorian;
-using Toybox.ActivityMonitor;
-using Toybox.UserProfile;
+import Toybox.WatchUi;
+import Toybox.Graphics;
+import Toybox.System;
+import Toybox.Lang;
+import Toybox.Time;
+import Toybox.Time.Gregorian;
+import Toybox.ActivityMonitor;
+import Toybox.UserProfile;
+import Toybox.Math;
 
 class AnalogView extends WatchUi.WatchFace {
-    var centerX, centerY, radius;
-    var font;
+    private var centerX as Number = 0;
+    private var centerY as Number = 0;
+    private var radius as Number = 0;
 
     function initialize() {
         WatchFace.initialize();
     }
 
-    function onLayout(dc) {
+    function onLayout(dc as Graphics.Dc) as Void {
         setLayout(Rez.Layouts.WatchFace(dc));
         
         centerX = dc.getWidth() / 2;
         centerY = dc.getHeight() / 2;
         radius = Math.min(centerX, centerY) - 20;
-        
-        font = Graphics.FONT_SYSTEM_TINY;
     }
 
-    function onUpdate(dc) {
+    function onUpdate(dc as Graphics.Dc) as Void {
         // Clear the screen with black background
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
@@ -55,7 +55,7 @@ class AnalogView extends WatchUi.WatchFace {
         drawDataFields(dc, info);
     }
     
-    function drawHourMarkers(dc) {
+    private function drawHourMarkers(dc as Graphics.Dc) as Void {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
         
@@ -77,11 +77,11 @@ class AnalogView extends WatchUi.WatchFace {
                 dc.setPenWidth(2);
             }
             
-            dc.drawLine(outerX, outerY, innerX, innerY);
+            dc.drawLine(outerX.toNumber(), outerY.toNumber(), innerX.toNumber(), innerY.toNumber());
         }
     }
     
-    function drawHourHand(dc, hour, minutes) {
+    private function drawHourHand(dc as Graphics.Dc, hour as Number, minutes as Number) as Void {
         var angle = ((hour % 12) * 30) + (minutes * 0.5) - 90;
         var angleRad = Math.toRadians(angle);
         var handLength = radius * 0.5;
@@ -91,10 +91,10 @@ class AnalogView extends WatchUi.WatchFace {
         
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(4);
-        dc.drawLine(centerX, centerY, endX, endY);
+        dc.drawLine(centerX, centerY, endX.toNumber(), endY.toNumber());
     }
     
-    function drawMinuteHand(dc, minutes) {
+    private function drawMinuteHand(dc as Graphics.Dc, minutes as Number) as Void {
         var angle = (minutes * 6) - 90;
         var angleRad = Math.toRadians(angle);
         var handLength = radius * 0.7;
@@ -104,10 +104,10 @@ class AnalogView extends WatchUi.WatchFace {
         
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(3);
-        dc.drawLine(centerX, centerY, endX, endY);
+        dc.drawLine(centerX, centerY, endX.toNumber(), endY.toNumber());
     }
     
-    function drawSecondHand(dc, seconds) {
+    private function drawSecondHand(dc as Graphics.Dc, seconds as Number) as Void {
         var angle = (seconds * 6) - 90;
         var angleRad = Math.toRadians(angle);
         var handLength = radius * 0.8;
@@ -117,18 +117,17 @@ class AnalogView extends WatchUi.WatchFace {
         
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawLine(centerX, centerY, endX, endY);
+        dc.drawLine(centerX, centerY, endX.toNumber(), endY.toNumber());
     }
     
-    function drawDataFields(dc, info) {
+    private function drawDataFields(dc as Graphics.Dc, info as Gregorian.Info) as Void {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         
         var activityInfo = ActivityMonitor.getInfo();
-        var profile = UserProfile.getProfile();
         var systemStats = System.getSystemStats();
         
         // Date (top)
-        var dateStr = info.day.format("%02d") + "/" + info.month.format("%02d");
+        var dateStr = Lang.format("$1$/$2$", [info.day.format("%02d"), info.month.format("%02d")]);
         var dateY = centerY - radius + 25;
         drawTextCentered(dc, dateStr, centerX, dateY, Graphics.FONT_SYSTEM_SMALL);
         
@@ -136,7 +135,7 @@ class AnalogView extends WatchUi.WatchFace {
         var stepsStr = formatNumber(activityInfo.steps) + " steps";
         var stepsX = centerX + radius * 0.7;
         var stepsY = centerY - radius * 0.4;
-        drawTextCentered(dc, stepsStr, stepsX, stepsY, Graphics.FONT_SYSTEM_XTINY);
+        drawTextCentered(dc, stepsStr, stepsX.toNumber(), stepsY.toNumber(), Graphics.FONT_SYSTEM_XTINY);
         
         // Heart Rate (right)
         var hrStr = "-- bpm";
@@ -144,7 +143,7 @@ class AnalogView extends WatchUi.WatchFace {
             hrStr = activityInfo.currentHeartRate.toString() + " bpm";
         }
         var hrX = centerX + radius * 0.8;
-        drawTextCentered(dc, hrStr, hrX, centerY, Graphics.FONT_SYSTEM_XTINY);
+        drawTextCentered(dc, hrStr, hrX.toNumber(), centerY, Graphics.FONT_SYSTEM_XTINY);
         
         // Body Battery (bottom right)
         var bbStr = "BB: --";
@@ -153,53 +152,47 @@ class AnalogView extends WatchUi.WatchFace {
         }
         var bbX = centerX + radius * 0.7;
         var bbY = centerY + radius * 0.4;
-        drawTextCentered(dc, bbStr, bbX, bbY, Graphics.FONT_SYSTEM_XTINY);
-        
-        // Exercise Readiness (bottom)
-        var erStr = "Ready: --";
-        // Note: Exercise readiness requires specific API access
-        var erY = centerY + radius - 25;
-        drawTextCentered(dc, erStr, centerX, erY, Graphics.FONT_SYSTEM_XTINY);
-        
-        // VO2 Max (bottom left)
-        var vo2Str = "VO2: --";
-        if (profile has :vo2maxRunning && profile.vo2maxRunning != null) {
-            vo2Str = "VO2: " + profile.vo2maxRunning.toString();
-        }
-        var vo2X = centerX - radius * 0.7;
-        var vo2Y = centerY + radius * 0.4;
-        drawTextCentered(dc, vo2Str, vo2X, vo2Y, Graphics.FONT_SYSTEM_XTINY);
+        drawTextCentered(dc, bbStr, bbX.toNumber(), bbY.toNumber(), Graphics.FONT_SYSTEM_XTINY);
         
         // Battery indicator (left)
         var batteryStr = systemStats.battery.format("%.0f") + "%";
         var batteryX = centerX - radius * 0.8;
-        drawTextCentered(dc, batteryStr, batteryX, centerY, Graphics.FONT_SYSTEM_XTINY);
+        drawTextCentered(dc, batteryStr, batteryX.toNumber(), centerY, Graphics.FONT_SYSTEM_XTINY);
+        
+        // Steps goal progress (bottom)
+        var progressStr = "Goal: --";
+        if (activityInfo has :stepGoal && activityInfo.stepGoal != null && activityInfo.stepGoal > 0) {
+            var progress = (activityInfo.steps.toFloat() / activityInfo.stepGoal.toFloat() * 100).toNumber();
+            progressStr = "Goal: " + progress.toString() + "%";
+        }
+        var progressY = centerY + radius - 25;
+        drawTextCentered(dc, progressStr, centerX, progressY, Graphics.FONT_SYSTEM_XTINY);
     }
     
-    function drawTextCentered(dc, text, x, y, font) {
+    private function drawTextCentered(dc as Graphics.Dc, text as String, x as Number, y as Number, font as Graphics.FontType) as Void {
         var textDimensions = dc.getTextDimensions(text, font);
         var textX = x - (textDimensions[0] / 2);
         var textY = y - (textDimensions[1] / 2);
         dc.drawText(textX, textY, font, text, Graphics.TEXT_JUSTIFY_LEFT);
     }
     
-    function formatNumber(number) {
+    private function formatNumber(number as Number or Null) as String {
         if (number == null) {
             return "--";
         }
         
         if (number >= 1000) {
-            return (number / 1000.0).format("%.1f") + "k";
+            return (number.toFloat() / 1000.0).format("%.1f") + "k";
         }
         return number.toString();
     }
 
-    function onHide() {
+    function onHide() as Void {
     }
 
-    function onExitSleep() {
+    function onExitSleep() as Void {
     }
 
-    function onEnterSleep() {
+    function onEnterSleep() as Void {
     }
 }

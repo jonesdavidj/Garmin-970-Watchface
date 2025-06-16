@@ -1,5 +1,5 @@
-using Toybox.Application;
-using Toybox.WatchUi;
+import Toybox.Application;
+import Toybox.WatchUi;
 
 class AnalogApp extends Application.AppBase {
 
@@ -8,15 +8,15 @@ class AnalogApp extends Application.AppBase {
     }
 
     // onStart() is called on application start up
-    function onStart(state) {
+    function onStart(state as Dictionary?) as Void {
     }
 
     // onStop() is called when your application is exiting
-    function onStop(state) {
+    function onStop(state as Dictionary?) as Void {
     }
 
     // Return the initial view of your application here
-    function getInitialView() {
-        return [ new AnalogView() ];
+    function getInitialView() as Array<WatchUi.Views or WatchUi.InputDelegates>? {
+        return [ new AnalogView() ] as Array<WatchUi.Views or WatchUi.InputDelegates>;
     }
 }
