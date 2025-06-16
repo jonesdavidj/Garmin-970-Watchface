@@ -2,15 +2,18 @@ version: '3.8'
 
 services:
   garmin-dev:
-    build: .
-    container_name: garmin-watchface-dev
-    #volumes:
-    #  - ./project:/workspace/analog-face
-    #  - ./output:/workspace/output
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: garmin-fr970-build
+    tty: true
     working_dir: /workspace/analog-face
     stdin_open: true
-    tty: true
     command: /bin/bash
     environment:
       - CIQ_HOME=/app/connectiq-sdk
       - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+      - DISPLAY=:99
+    labels:
+      - "description=Self contained Garmin ConnectIQ Build Environment for FR970"
+      - "project=garmin-watchface"

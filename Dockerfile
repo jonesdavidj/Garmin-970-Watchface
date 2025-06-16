@@ -48,10 +48,14 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libwebp.so.7 /usr/lib/x86_64-linux-gnu/libwe
 # Set JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
+# Set Connect IQ SDK environment variables
+ENV CIQ_HOME=/root/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin
+ENV PATH=$PATH:$CIQ_HOME/bin
+
 # Create working directory
 WORKDIR /app
 
-# Download and install Connect IQ SDK Manager
+# Copy and chmod Connect IQ SDK Manager
 RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-manager-linux.zip -O sdk-manager.zip && \
     unzip sdk-manager.zip && \
     rm sdk-manager.zip && \
@@ -60,10 +64,6 @@ RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-ma
 # Install the latest SDK using SDK Manager
 RUN ./connectiq-sdk-manager-linux --yes && \
     rm connectiq-sdk-manager-linux
-
-# Set Connect IQ SDK environment variables
-ENV CIQ_HOME=/root/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin
-ENV PATH=$PATH:$CIQ_HOME/bin
 
 # Create a development key for local builds
 RUN mkdir -p $CIQ_HOME/bin && \
