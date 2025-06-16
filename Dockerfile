@@ -51,11 +51,19 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 # Create working directory
 WORKDIR /workspace/analog-face
 
+# Download and install Connect IQ SDK (cached layer)
+RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip && \
+    unzip connectiq-sdk.zip && \
+    mkdir connectiq-sdk && \
+    mv bin doc resources samples share connectiq-sdk/ && \
+    chmod +x connectiq-sdk/bin/* && \
+    rm connectiq-sdk.zip
+
 # Copy the entire project (including the SDK)
 COPY . /workspace/analog-face
 
 # Set Connect IQ SDK environment variables to use the copied SDK
-ENV CIQ_HOME=/workspace/analog-face/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f
+ENV CIQ_HOME=/workspace/analog-face/connectiq-sdk
 ENV PATH=$PATH:$CIQ_HOME/bin
 
 # Make SDK binaries executable

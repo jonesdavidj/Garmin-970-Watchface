@@ -51,7 +51,7 @@ fi
 echo ""
 
 # Set up environment - Use the SDK in the project directory
-export CIQ_HOME=/workspace/analog-face/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f
+export CIQ_HOME=/workspace/analog-face/connectiq-sdk
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export PATH=$PATH:$CIQ_HOME/bin
 
