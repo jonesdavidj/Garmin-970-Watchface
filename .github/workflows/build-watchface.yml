@@ -23,7 +23,6 @@ on:
 
 env:
   WATCH_FACE_NAME: analog-face
-  CIQ_SDK_VERSION: "4.2.4"
 
 jobs:
   build:
@@ -44,33 +43,40 @@ jobs:
     - name: Cache Connect IQ SDK
       uses: actions/cache@v4
       with:
-        path: ~/connectiq-sdk
-        key: connectiq-sdk-${{ env.CIQ_SDK_VERSION }}
+        path: ~/.Garmin/ConnectIQ/Sdks
+        key: connectiq-sdk-manager-${{ runner.os }}
         restore-keys: |
-          connectiq-sdk-
+          connectiq-sdk-manager-
 
-    - name: Download and Install Connect IQ SDK
+    - name: Download and Install Connect IQ SDK Manager
       run: |
-        if [ ! -d ~/connectiq-sdk ]; then
-          echo "Downloading Connect IQ SDK..."
-          wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-${{ env.CIQ_SDK_VERSION }}-2023-11-07-15cda8c.zip -O connectiq-sdk.zip
-          unzip connectiq-sdk.zip
-          mv connectiq-sdk-lin-* ~/connectiq-sdk
-          rm connectiq-sdk.zip
+        if [ ! -d ~/.Garmin/ConnectIQ/Sdks ]; then
+          echo "Downloading Connect IQ SDK Manager..."
+          wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-manager-linux.zip -O sdk-manager.zip
+          unzip sdk-manager.zip
+          chmod +x connectiq-sdk-manager-linux
+          
+          echo "Installing latest Connect IQ SDK..."
+          ./connectiq-sdk-manager-linux --yes
+          rm sdk-manager.zip connectiq-sdk-manager-linux
         else
           echo "Using cached Connect IQ SDK"
         fi
         
+        # Find the installed SDK path
+        SDK_PATH=$(find ~/.Garmin/ConnectIQ/Sdks -name "connectiq-sdk-*" -type d | head -1)
+        echo "SDK_PATH=$SDK_PATH" >> $GITHUB_ENV
+        
         # Set permissions
-        chmod +x ~/connectiq-sdk/bin/*
+        chmod +x $SDK_PATH/bin/*
         
         # Verify installation
-        ~/connectiq-sdk/bin/monkeyc --version
+        $SDK_PATH/bin/monkeyc --version
 
     - name: Set up environment variables
       run: |
-        echo "CIQ_HOME=$HOME/connectiq-sdk" >> $GITHUB_ENV
-        echo "$HOME/connectiq-sdk/bin" >> $GITHUB_PATH
+        echo "CIQ_HOME=$SDK_PATH" >> $GITHUB_ENV
+        echo "$SDK_PATH/bin" >> $GITHUB_PATH
 
     - name: Validate project structure
       run: |
@@ -140,7 +146,7 @@ jobs:
         Git Branch: ${{ github.ref_name }}
         
         Target Device: Garmin Forerunner 970
-        SDK Version: ${{ env.CIQ_SDK_VERSION }}
+        SDK Version: Latest (via SDK Manager)
         
         Installation Instructions:
         1. Connect your Forerunner 970 to your computer
@@ -149,7 +155,7 @@ jobs:
         4. Go to Settings > Watch Face and select 'Tableau Analog'
         
         Features:
-        - Analog watch face with classic inspired design
+        - Analog watch face with classic watch-inspired design
         - Black and white color scheme
         - Date, steps, heart rate, body battery indicators
         - Exercise readiness and VO2 Max display
@@ -170,15 +176,15 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.version.outputs.version }}
-        name: nalog Watch Face v${{ steps.version.outputs.version }}
+        name: Analog Watch Face v${{ steps.version.outputs.version }}
         body: |
-          ## Analog Watch Face
+          ## Classic Analog Watch Face
           
           **Version:** ${{ steps.version.outputs.version }}  
           **Target Device:** Garmin Forerunner 970
           
           ### Features
-          - Clean analog design inspired bycClassic watchface design
+          - Clean analog design inspired by classic watch face
           - Black and white color scheme
           - Comprehensive data display around the dial
           - Date, steps, heart rate, body battery, exercise readiness, VO2 Max
