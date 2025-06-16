@@ -140,10 +140,11 @@ echo "✅ All required files found"
 # Validation command - SDK 8.x uses different syntax
 VALIDATE_CMD=(
     "$CIQ_HOME/bin/monkeyc"
-    "--typecheck" "2"
-    "--manifest" "manifest.xml"
-    "--device" "fr970"
-    "--warn"
+    "-l" "2"
+    "-m" "manifest.xml"
+    "-d" "fr970"
+    "-o" "build/analog-face.prg"
+    "-w"
 )
 # "--sdk" "$CIQ_HOME"
     
