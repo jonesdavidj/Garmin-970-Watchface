@@ -50,8 +50,8 @@ else
 fi
 echo ""
 
-# Set up environment
-export CIQ_HOME=/app/connectiq-sdk
+# Set up environment - Use the SDK in the project directory
+export CIQ_HOME=/workspace/analog-face/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export PATH=$PATH:$CIQ_HOME/bin
 
@@ -59,14 +59,14 @@ export PATH=$PATH:$CIQ_HOME/bin
 echo "🔧 Environment check:"
 echo "CIQ_HOME: $CIQ_HOME"
 echo "JAVA_HOME: $JAVA_HOME"
-echo "PATH: $PATH"
+echo "Current directory: $(pwd)"
 echo ""
 
 # Check if MonkeyC compiler exists and is executable
 if [ ! -f "$CIQ_HOME/bin/monkeyc" ]; then
     echo "❌ Error: MonkeyC compiler not found at $CIQ_HOME/bin/monkeyc"
     echo "Available files in $CIQ_HOME/bin/:"
-    ls -la $CIQ_HOME/bin/ || echo "Directory does not exist"
+    ls -la $CIQ_HOME/bin/ 2>/dev/null || echo "Directory does not exist"
     exit 1
 fi
 
@@ -78,13 +78,14 @@ fi
 
 # Test MonkeyC compiler
 echo "🔍 Testing MonkeyC compiler..."
-$CIQ_HOME/bin/monkeyc --help > /dev/null 2>&1
-if [ $? -ne 0 ]; then
+if ! $CIQ_HOME/bin/monkeyc --version > /dev/null 2>&1; then
     echo "❌ Error: MonkeyC compiler failed to run"
     echo "Trying to get version info..."
-    $CIQ_HOME/bin/monkeyc --version || echo "Version check also failed"
+    $CIQ_HOME/bin/monkeyc --version 2>&1 || echo "Version check failed"
     exit 1
 fi
+
+echo "✅ MonkeyC compiler is working"
 
 # Check if we're in the right directory
 if [ ! -f "manifest.xml" ]; then
@@ -101,8 +102,11 @@ if [ ! -d "source" ]; then
     exit 1
 fi
 
-if [ ! -d "resources" ]; then
-    echo "❌ Error: resources directory not found"
+# Check if device files exist
+if [ ! -f "Devices/fr970/compiler.json" ]; then
+    echo "❌ Error: Device configuration not found at Devices/fr970/compiler.json"
+    echo "Available device files:"
+    ls -la Devices/fr970/ 2>/dev/null || echo "Devices/fr970 directory not found"
     exit 1
 fi
 
@@ -119,48 +123,41 @@ if [ "$VALIDATE_ONLY" = false ]; then
     fi
 fi
 
-# Check for required files
+# Check for required source files
 echo "🔍 Checking project files..."
-if [ ! -f "source/AnalogueApp.mc" ]; then
-    echo "❌ Error: source/AnalogueApp.mc not found"
-    echo "Available source files:"
-    ls -la source/
-    exit 1
-fi
-
-if [ ! -f "source/AnalogueView.mc" ]; then
-    echo "❌ Error: source/AnalogueView.mc not found"
-    echo "Available source files:"
-    ls -la source/
-    exit 1
-fi
+required_files=("source/AnalogueApp.mc" "source/AnalogueView.mc")
+for file in "${required_files[@]}"; do
+    if [ ! -f "$file" ]; then
+        echo "❌ Error: $file not found"
+        echo "Available source files:"
+        ls -la source/
+        exit 1
+    fi
+done
 
 echo "✅ All required files found"
 
-# Build the command as an array to avoid shell parsing issues
-MONKEYC_CMD=(
+# Validation command - SDK 8.x uses different syntax
+VALIDATE_CMD=(
     "$CIQ_HOME/bin/monkeyc"
-    "--typecheck" "2"
+    "--typecheck"
     "--manifest" "manifest.xml"
-    "--devices" "Devices/fr970.json"
     "--device" "fr970"
+    "--sdk" "$CIQ_HOME"
     "--warn"
-    "--output" "build/analog-face.dummy"
 )
 
 # Add source files
 for source_file in source/*.mc; do
     if [ -f "$source_file" ]; then
-        MONKEYC_CMD+=("$source_file")
+        VALIDATE_CMD+=("$source_file")
     fi
 done
 
 # Validate code first
 echo "✅ Validating code..."
-echo "Running: ${MONKEYC_CMD[*]}"
-"${MONKEYC_CMD[@]}"
-
-if [ $? -ne 0 ]; then
+echo "Running: ${VALIDATE_CMD[*]}"
+if ! "${VALIDATE_CMD[@]}"; then
     echo "❌ Code validation failed!"
     exit 1
 fi
@@ -177,14 +174,13 @@ fi
 # Build the watch face
 echo "🔨 Building watch face..."
 
-# Build command
+# Build command for SDK 8.x
 BUILD_CMD=(
     "$CIQ_HOME/bin/monkeyc"
     "--output" "build/analog-face.prg"
     "--manifest" "manifest.xml"
-    "--sdk" "$CIQ_HOME"
-    "--devices" "Devices/fr970.json"
     "--device" "fr970"
+    "--sdk" "$CIQ_HOME"
     "--warn"
     "--private-key" "$CIQ_HOME/bin/developer_key.der"
 )
@@ -196,10 +192,11 @@ for source_file in source/*.mc; do
     fi
 done
 
-echo "Running: ${BUILD_CMD[*]}"
-"${BUILD_CMD[@]}"
+echo "Running build command:"
+echo "${BUILD_CMD[*]}"
+echo ""
 
-if [ $? -eq 0 ]; then
+if "${BUILD_CMD[@]}"; then
     echo ""
     echo "🎉 Build successful!"
     echo "📦 Output file: build/analog-face.prg"
@@ -223,7 +220,7 @@ if [ $? -eq 0 ]; then
     echo "1. Connect your Forerunner 970 to your computer"
     echo "2. Copy build/analog-face.prg to GARMIN/APPS folder on your watch"
     echo "3. Safely eject your watch"
-    echo "4. On your watch: Settings > Watch Face > Select 'Tableau Analog'"
+    echo "4. On your watch: Settings > Watch Face > Select your watchface"
     echo ""
     echo "💡 Pro tip: You can also test in the simulator first:"
     echo "   connectiq -d fr970 build/analog-face.prg"
