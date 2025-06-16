@@ -143,10 +143,10 @@ VALIDATE_CMD=(
     "--typecheck" "2"
     "--manifest" "manifest.xml"
     "--device" "fr970"
-    "--sdk" "$CIQ_HOME"
     "--warn"
 )
-
+# "--sdk" "$CIQ_HOME"
+    
 # Add source files
 for source_file in source/*.mc; do
     if [ -f "$source_file" ]; then
