@@ -48,22 +48,18 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libwebp.so.7 /usr/lib/x86_64-linux-gnu/libwe
 # Set JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
-# Set Connect IQ SDK environment variables
-ENV CIQ_HOME=/root/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin
+# Create working directory
+WORKDIR /workspace/analog-face
+
+# Copy the entire project (including the SDK)
+COPY . /workspace/analog-face
+
+# Set Connect IQ SDK environment variables to use the copied SDK
+ENV CIQ_HOME=/workspace/analog-face/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f
 ENV PATH=$PATH:$CIQ_HOME/bin
 
-# Create working directory
-WORKDIR /app
-
-# Copy and chmod Connect IQ SDK Manager
-RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-manager-linux.zip -O sdk-manager.zip && \
-    unzip sdk-manager.zip && \
-    rm sdk-manager.zip && \
-    chmod +x connectiq-sdk-manager-linux
-
-# Install the latest SDK using SDK Manager
-RUN ./connectiq-sdk-manager-linux --yes && \
-    rm connectiq-sdk-manager-linux
+# Make SDK binaries executable
+RUN chmod +x $CIQ_HOME/bin/* || true
 
 # Create a development key for local builds
 RUN mkdir -p $CIQ_HOME/bin && \
@@ -71,29 +67,20 @@ RUN mkdir -p $CIQ_HOME/bin && \
     openssl genrsa -out developer_key.pem 4096 && \
     openssl rsa -in developer_key.pem -outform DER -out developer_key.der
 
-# Create workspace directory
-RUN mkdir -p /workspace
-
-# Set working directory to workspace
-WORKDIR /workspace/analog-face
-COPY . /workspace/analog-face
+# Make build script executable
+RUN chmod +x build.sh
 
 # Create useful aliases and environment setup
 RUN echo 'alias ll="ls -la"' >> /root/.bashrc && \
-    echo 'alias build="monkeyc --output build/analog-face.prg --manifest manifest.xml --device fr970 --device-path Devices/fr970 --fonts Fonts --warn --private-key \$CIQ_HOME/bin/developer_key.der source/*.mc"' >> /root/.bashrc && \
-    echo 'alias validate="monkeyc --typecheck --manifest manifest.xml --device fr970 --device-path Devices/fr970 source/*.mc"' >> /root/.bashrc && \
     echo 'export PS1="[Garmin Dev] \w $ "' >> /root/.bashrc
 
 # Wrapper script for headless simulator usage
 RUN echo '#!/bin/bash\nxvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" "$CIQ_HOME/bin/connectiq" "$@"' > /usr/local/bin/connectiq-headless && \
     chmod +x /usr/local/bin/connectiq-headless
 
-RUN chmod +x /workspace/analog-face/connectiq-headless.sh
-RUN chmod +x build.sh
-
 # Keep container running
 CMD ["tail", "-f", "/dev/null"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD java -version && monkeyc --version || exit 1
+    CMD test -f $CIQ_HOME/bin/monkeyc && java -version || exit 1
