@@ -58,4 +58,5 @@ fi
 echo ""
 echo "🔨 Running build.sh..."
 chmod +x build.sh
-./build.sh
+monkeyc --version
+connectiq devices list
