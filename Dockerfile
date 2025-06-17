@@ -16,6 +16,12 @@ RUN apt-get update && apt-get install -y \
     libfreetype6 \
     libfontconfig1 \
     libsecret-1-0 \
+    libusb-1.0-0 \
+    libgtk-3-0 \
+    libcanberra-gtk-module \
+    libnss3 \
+    libxss1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
