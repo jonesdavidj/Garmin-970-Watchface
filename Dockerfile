@@ -56,6 +56,7 @@ RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-li
     unzip connectiq-sdk.zip && \
     mkdir connectiq-sdk && \
     mv bin doc resources samples share connectiq-sdk/ && \
+    mv *.html connectiq-sdk/ && \
     chmod +x connectiq-sdk/bin/* && \
     rm connectiq-sdk.zip
 
