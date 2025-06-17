@@ -8,14 +8,12 @@ services:
     stdin_open: true
     tty: true
     command: /bin/bash
-    environment:
-      - CIQ_HOME=/workspace/analog-face/connectiq-sdk
       - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/workspace/analog-face/connectiq-sdk/bin
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/workspace/analog-face/
     volumes:
       # Optional: mount a volume for persistent build outputs
       - garmin-builds:/workspace/analog-face/build
-      - hs_dev_mount:/mnt/hs_dev:rw
+      - hs_dev_mount:/mnt/hs_dev:ro
     networks:
       - garmin-dev-network
 
@@ -26,7 +24,7 @@ volumes:
     driver: local
     driver_opts:
       type: "nfs"
-      o: "addr=nas-home.local,nolock,rw"
+      o: "addr=nas-home.local,nolock,ro"
       device: ":/volume1/hs_dev"
 
 networks:

@@ -19,36 +19,9 @@ RUN apt-get update && apt-get install -y \
 
 # Copy project files
 COPY . .
-
-RUN echo "📦 Extracting Garmin SDK..." && \
-    ls -lh /mnt/hs_dev
-RUN if [ ! -f /mnt/hs_dev/GarminSDK.tgz ]; then \
-      echo "❌ GarminSDK.tgz not found in /mnt/hs_dev"; \
-      exit 1; \
-    else \
-      echo "✅ GarminSDK.tgz found, proceeding with extraction"; \
-      tar --no-same-owner -xvzf /mnt/hs_dev/GarminSDK.tgz && \
-    fi
-RUN echo "📂 Listing current directory after extraction:" && \  
-    ls -l && \
-    if [ -d "ConnectIQ" ]; then \
-      mv ConnectIQ connectiq-sdk && echo "✅ SDK moved to connectiq-sdk/"; \
-    else \
-      echo "❌ ConnectIQ directory not found after extract"; \
-      exit 1; \
-    fi
-
-
-# Make tools executable
-RUN chmod +x connectiq-sdk/bin/*
-
+RUN chmod +x setup.sh build.sh
 # Set environment
-ENV CIQ_HOME=/workspace/analog-face/connectiq-sdk
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH=$PATH:$CIQ_HOME/bin
-
-# Confirm install
-RUN monkeyc --version || echo "MonkeyC missing"
-RUN connectiq devices list || echo "Device list failed"
 
 CMD ["/bin/bash"]
