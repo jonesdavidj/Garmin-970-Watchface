@@ -13,8 +13,7 @@ services:
       - hs_dev_mount:/mnt/hs_dev:ro
     networks:
       - garmin-dev-network
-    command: tail -f /dev/null
-
+    
 volumes:
   garmin-builds:
     driver: local
