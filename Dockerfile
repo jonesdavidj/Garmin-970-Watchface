@@ -53,11 +53,10 @@ WORKDIR /workspace/analog-face
 
 # Download and install Connect IQ SDK (cached layer)
 RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip && \
-    unzip connectiq-sdk.zip -d connectiq-sdk-temp && \
-    mkdir -p connectiq-sdk && \
-    # The SDK extracts to a folder with the version name, move contents up
-    mv connectiq-sdk-temp/connectiq-sdk-lin-*/* connectiq-sdk/ && \
-    rm -rf connectiq-sdk-temp && \
+    unzip connectiq-sdk.zip && \
+    # The extracted folder should be named exactly as the zip file (minus .zip)
+    mv connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f connectiq-sdk && \
+    chmod +x connectiq-sdk/bin/* && \
     rm connectiq-sdk.zip
 
 # Copy the entire project
