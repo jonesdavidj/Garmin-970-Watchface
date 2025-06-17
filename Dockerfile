@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     libxi6 \
     libfreetype6 \
     libfontconfig1 \
-    libsecret-1-0
+    libsecret-1-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
