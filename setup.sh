@@ -1,29 +1,40 @@
 #!/bin/bash
 set -e
 
-echo "📦 Extracting SDK from /mnt/hs_dev/GarminSDK.tgz..."
+echo "📦 Extracting Garmin SDK from /mnt/hs_dev/GarminSDK.tgz..."
 
 cd /workspace/analog-face
 
-# Only extract if it hasn't already been unpacked
+# Only extract if not already unpacked
 if [ ! -d "connectiq-sdk" ]; then
     if [ ! -f /mnt/hs_dev/GarminSDK.tgz ]; then
         echo "❌ GarminSDK.tgz not found in /mnt/hs_dev"
         exit 1
     fi
+
     tar --no-same-owner -xzf /mnt/hs_dev/GarminSDK.tgz
+
+    # Flatten the SDK structure
     mkdir -p connectiq-sdk
     mv ConnectIQ/Sdks/* connectiq-sdk/
 else
     echo "✅ SDK already extracted."
 fi
 
-# Set environment variables
-export CIQ_HOME=/workspace/analog-face/connectiq-sdk
-export PATH=$PATH:$CIQ_HOME/bin
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+# Detect the extracted SDK version directory
+CIQ_HOME=$(find /workspace/analog-face/connectiq-sdk -type d -name "connectiq-sdk-lin-*" | head -n 1)
 
-# Make sure tools are executable
+if [ -z "$CIQ_HOME" ]; then
+    echo "❌ SDK folder not found under connectiq-sdk/"
+    exit 1
+fi
+
+# Set environment
+export CIQ_HOME
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export PATH=$PATH:$CIQ_HOME/bin
+
+# Make tools executable
 chmod +x $CIQ_HOME/bin/*
 
 echo ""
@@ -46,4 +57,5 @@ fi
 
 echo ""
 echo "🔨 Running build.sh..."
-
+chmod +x build.sh
+./build.sh
