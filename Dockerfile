@@ -1,17 +1,14 @@
 FROM ubuntu:22.04
 
-# Set working directory
 WORKDIR /workspace/analog-face
 
-# Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     openjdk-11-jdk \
     unzip \
-    bash \
     curl \
+    bash \
     ca-certificates \
     libxrender1 \
     libxtst6 \
@@ -20,23 +17,23 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy project into container
+# Copy project files
 COPY . .
 
-# Extract Garmin SDK
-RUN unzip Garmin.zip -d connectiq-sdk
+# Extract Garmin SDK from mounted volume
+RUN tar -xzf /external/hs_dev/GarminSDK.tgz && \
+    mv ConnectIQ connectiq-sdk
 
-# Make SDK tools executable
+# Make tools executable
 RUN chmod +x connectiq-sdk/bin/*
 
-# Set environment variables
+# Set environment
 ENV CIQ_HOME=/workspace/analog-face/connectiq-sdk
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH=$PATH:$CIQ_HOME/bin
 
-# Test SDK installation
-RUN monkeyc --version || echo "❌ MonkeyC not working"
-RUN connectiq devices list || echo "❌ Could not list devices"
+# Confirm install
+RUN monkeyc --version || echo "MonkeyC missing"
+RUN connectiq devices list || echo "Device list failed"
 
-# Default shell
 CMD ["/bin/bash"]
