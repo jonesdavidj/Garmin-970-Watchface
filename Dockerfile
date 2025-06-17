@@ -20,13 +20,15 @@ RUN apt-get update && apt-get install -y \
 # Copy project files
 COPY . .
 
-RUN echo "🧪 Checking mounted files:" && \
-    ls -lh /external/hs_dev && \
-    echo "📦 Attempting to extract SDK..." && \
-    tar -xzf /external/hs_dev/GarminSDK.tgz && \
-    echo "📁 Directory after extraction:" && \
-    ls -lh && \
-    mv ConnectIQ connectiq-sdk
+RUN echo "📦 Extracting Garmin SDK..." && \
+    tar --no-same-owner -xzf /external/hs_dev/GarminSDK.tgz && \
+    if [ -d "ConnectIQ" ]; then \
+      mv ConnectIQ connectiq-sdk && echo "✅ SDK moved to connectiq-sdk/"; \
+    else \
+      echo "❌ ConnectIQ directory not found after extract"; \
+      exit 1; \
+    fi
+
 
 # Make tools executable
 RUN chmod +x connectiq-sdk/bin/*
