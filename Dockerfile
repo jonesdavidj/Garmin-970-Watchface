@@ -24,4 +24,4 @@ RUN chmod +x setup.sh build.sh
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH=$PATH:$CIQ_HOME/bin
 
-CMD ["/bin/bash"]
+CMD ["tail", "-f", "/dev/null"]
