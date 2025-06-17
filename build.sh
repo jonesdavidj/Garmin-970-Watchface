@@ -182,7 +182,8 @@ BUILD_CMD=(
     "$CIQ_HOME/bin/monkeyc"
     "-o" "build/analog-face.prg"
     "-m" "manifest.xml"
-    "--devicefile" "Devices/fr970/compiler.json"
+    "--devices" "Devices/devices.xml"
+    "-d" "fr970"
     "-w"
 )
 
