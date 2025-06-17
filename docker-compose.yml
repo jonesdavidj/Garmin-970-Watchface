@@ -15,7 +15,7 @@ services:
     volumes:
       # Optional: mount a volume for persistent build outputs
       - garmin-builds:/workspace/analog-face/build
-      - hs_dev_mount:/mnt/hs_dev:ro
+      - hs_dev_mount:/mnt/hs_dev:rw
     networks:
       - garmin-dev-network
 
@@ -26,7 +26,7 @@ volumes:
     driver: local
     driver_opts:
       type: "nfs"
-      o: "addr=nas-home.local,nolock,ro"
+      o: "addr=nas-home.local,nolock,rw"
       device: ":/volume1/hs_dev"
 
 networks:
