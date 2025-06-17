@@ -12,7 +12,8 @@ if [ ! -d "connectiq-sdk" ]; then
         exit 1
     fi
     tar --no-same-owner -xzf /mnt/hs_dev/GarminSDK.tgz
-    mv ConnectIQ connectiq-sdk
+    mkdir -p connectiq-sdk
+    mv ConnectIQ/Sdks/* connectiq-sdk/
 else
     echo "✅ SDK already extracted."
 fi
