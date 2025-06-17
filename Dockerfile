@@ -20,8 +20,12 @@ RUN apt-get update && apt-get install -y \
 # Copy project files
 COPY . .
 
-# Extract Garmin SDK from mounted volume
-RUN tar -xzf /external/hs_dev/GarminSDK.tgz && \
+RUN echo "🧪 Checking mounted files:" && \
+    ls -lh /external/hs_dev && \
+    echo "📦 Attempting to extract SDK..." && \
+    tar -xzf /external/hs_dev/GarminSDK.tgz && \
+    echo "📁 Directory after extraction:" && \
+    ls -lh && \
     mv ConnectIQ connectiq-sdk
 
 # Make tools executable
