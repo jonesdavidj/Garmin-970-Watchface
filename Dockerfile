@@ -51,13 +51,13 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 # Create working directory
 WORKDIR /workspace/analog-face
 
-RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip && \
-    unzip connectiq-sdk.zip && \
-    mkdir connectiq-sdk && \
-    mv bin doc resources samples share connectiq-sdk/ && \
-    mv .html connectiq-sdk/ && \
-    chmod +x connectiq-sdk/bin/ && \
-    rm connectiq-sdk.zip
+RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip
+RUN unzip connectiq-sdk.zip 
+RUN mkdir connectiq-sdk 
+RUN mv bin doc resources samples share connectiq-sdk/ 
+RUN mv .html connectiq-sdk/ 
+RUN chmod +x connectiq-sdk/bin/ 
+RUN rm connectiq-sdk.zip
 
 # Copy the entire project
 COPY . /workspace/analog-face
