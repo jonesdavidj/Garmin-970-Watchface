@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     libnss3 \
     libxss1 \
     libasound2 \
+    libwebkit2gtk-4.0-37 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
