@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# Garmin Watch Face Build Script for SDK 8.1.1
+# Garmin Watch Face Build Script
 # This script builds your analog watch face for Forerunner 970
 # Usage: ./build.sh [options]
 # Options:
 #   --validate-only    Only validate code, don't build
 #   --clean           Clean build directory first
+#   --debug           Enable debug output
 #   --help            Show this help
 
 set -e  # Exit on any error
@@ -13,6 +14,7 @@ set -e  # Exit on any error
 # Parse command line arguments
 VALIDATE_ONLY=false
 CLEAN_BUILD=false
+DEBUG=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -24,13 +26,18 @@ while [[ $# -gt 0 ]]; do
             CLEAN_BUILD=true
             shift
             ;;
+        --debug)
+            DEBUG=true
+            shift
+            ;;
         --help)
-            echo "Garmin Watch Face Build Script for SDK 8.1.1"
+            echo "Garmin Watch Face Build Script"
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
             echo "  --validate-only    Only validate code, don't build"
             echo "  --clean           Clean build directory first"
+            echo "  --debug           Enable debug output"
             echo "  --help            Show this help"
             exit 0
             ;;
@@ -42,7 +49,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "=== Garmin Analog Watch Face Build (SDK 8.1.1) ==="
+echo "=== Garmin Analog Watch Face Build ==="
 if [ "$VALIDATE_ONLY" = true ]; then
     echo "🔍 Code validation mode"
 else
@@ -55,12 +62,38 @@ export CIQ_HOME=/workspace/analog-face/connectiq-sdk
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export PATH=$PATH:$CIQ_HOME/bin
 
+# Debug mode
+if [ "$DEBUG" = true ]; then
+    set -x  # Enable command tracing
+fi
+
 # Debug: Show environment
 echo "🔧 Environment check:"
 echo "CIQ_HOME: $CIQ_HOME"
 echo "JAVA_HOME: $JAVA_HOME"
 echo "Current directory: $(pwd)"
+echo "Java version:"
+java -version 2>&1 | head -1
 echo ""
+
+# Comprehensive SDK check
+echo "🔍 SDK Installation Check:"
+if [ ! -d "$CIQ_HOME" ]; then
+    echo "❌ Error: CIQ_HOME directory not found at $CIQ_HOME"
+    exit 1
+fi
+
+echo "✅ SDK directory found"
+
+# List SDK contents for debugging
+if [ "$DEBUG" = true ]; then
+    echo "SDK directory contents:"
+    ls -la $CIQ_HOME/
+    echo ""
+    echo "SDK bin directory contents:"
+    ls -la $CIQ_HOME/bin/ | head -10
+    echo ""
+fi
 
 # Check if MonkeyC compiler exists and is executable
 if [ ! -f "$CIQ_HOME/bin/monkeyc" ]; then
@@ -71,8 +104,7 @@ if [ ! -f "$CIQ_HOME/bin/monkeyc" ]; then
 fi
 
 if [ ! -x "$CIQ_HOME/bin/monkeyc" ]; then
-    echo "❌ Error: MonkeyC compiler is not executable"
-    echo "Making it executable..."
+    echo "⚠️  Warning: MonkeyC compiler is not executable, fixing..."
     chmod +x $CIQ_HOME/bin/monkeyc
 fi
 
@@ -82,10 +114,17 @@ if ! $CIQ_HOME/bin/monkeyc --version > /dev/null 2>&1; then
     echo "❌ Error: MonkeyC compiler failed to run"
     echo "Trying to get version info..."
     $CIQ_HOME/bin/monkeyc --version 2>&1 || echo "Version check failed"
+    
+    # Additional debugging
+    echo "File permissions:"
+    ls -la $CIQ_HOME/bin/monkeyc
+    echo "File type:"
+    file $CIQ_HOME/bin/monkeyc
     exit 1
 fi
 
-echo "✅ MonkeyC compiler is working"
+MONKEYC_VERSION=$($CIQ_HOME/bin/monkeyc --version 2>&1 | head -1)
+echo "✅ MonkeyC compiler is working: $MONKEYC_VERSION"
 
 # Check if we're in the right directory
 if [ ! -f "manifest.xml" ]; then
@@ -102,7 +141,7 @@ if [ ! -d "source" ]; then
     exit 1
 fi
 
-# Check if device files exist
+# Check device configuration - for SDK 8.x, we need compiler.json
 if [ ! -f "Devices/fr970/compiler.json" ]; then
     echo "❌ Error: Device configuration not found at Devices/fr970/compiler.json"
     echo "Available device files:"
@@ -135,98 +174,78 @@ for file in "${required_files[@]}"; do
     fi
 done
 
-# Check for API database files in SDK
-API_DB="$CIQ_HOME/bin/api.db"
-API_MIR="$CIQ_HOME/bin/api.mir"
-DEVICES_XML="$CIQ_HOME/bin/devices.xml"
-
-if [ ! -f "$API_DB" ]; then
-    echo "❌ Warning: API database not found at $API_DB"
-    echo "Available files in SDK bin:"
-    ls -la $CIQ_HOME/bin/
-fi
-
 echo "✅ All required files found"
 
-# Build source file list
-SOURCE_FILES=()
-for source_file in source/*.mc; do
-    if [ -f "$source_file" ]; then
-        SOURCE_FILES+=("$source_file")
-    fi
-done
-
-# Build resource file list (if any)
-RESOURCE_FILES=()
-if [ -f "resources/layouts.xml" ]; then
-    RESOURCE_FILES+=("resources/layouts.xml")
-fi
-if [ -f "resources/strings.xml" ]; then
-    RESOURCE_FILES+=("resources/strings.xml")
-fi
-
-# Validation/Build command for SDK 8.1.1
-echo "✅ Preparing build command..."
-
+# For SDK 8.x, the build command syntax is different
+# Build command for SDK 8.x
 BUILD_CMD=(
     "$CIQ_HOME/bin/monkeyc"
-    "--output" "build/analog-face.prg"
-    "--device" "fr970"
-    "--warn"
-    "--typecheck" "2"
+    "-o" "build/analog-face.prg"
+    "-m" "manifest.xml"
+    "-d" "fr970"
+    "-w"
 )
 
-# Add API files if they exist
-if [ -f "$API_DB" ]; then
-    BUILD_CMD+=("--apidb" "$API_DB")
-fi
-
-if [ -f "$API_MIR" ]; then
-    BUILD_CMD+=("--apimir" "$API_MIR")
-fi
-
-# Add devices.xml if it exists
-if [ -f "$DEVICES_XML" ]; then
-    BUILD_CMD+=("--devices" "$DEVICES_XML")
-fi
-
-# Add private key for signing (only for actual build, not validation)
-if [ "$VALIDATE_ONLY" = false ] && [ -f "$CIQ_HOME/bin/developer_key.der" ]; then
-    BUILD_CMD+=("--private-key" "$CIQ_HOME/bin/developer_key.der")
+# Add private key if it exists
+if [ -f "$CIQ_HOME/bin/developer_key.der" ]; then
+    BUILD_CMD+=("-y" "$CIQ_HOME/bin/developer_key.der")
+else
+    echo "⚠️  Warning: No private key found, creating one..."
+    cd $CIQ_HOME/bin && \
+    openssl genrsa -out developer_key.pem 4096 && \
+    openssl rsa -in developer_key.pem -outform DER -out developer_key.der
+    BUILD_CMD+=("-y" "$CIQ_HOME/bin/developer_key.der")
 fi
 
 # Add source files
-BUILD_CMD+=("${SOURCE_FILES[@]}")
+for source_file in source/*.mc; do
+    if [ -f "$source_file" ]; then
+        BUILD_CMD+=("$source_file")
+    fi
+done
 
-# Add resource files if any
-if [ ${#RESOURCE_FILES[@]} -gt 0 ]; then
-    BUILD_CMD+=("--rez" "${RESOURCE_FILES[@]}")
+# Add resource files
+if [ -f "resources/layouts.xml" ]; then
+    BUILD_CMD+=("resources/layouts.xml")
+fi
+if [ -f "resources/strings.xml" ]; then
+    BUILD_CMD+=("resources/strings.xml")
 fi
 
-# Run validation/build
+# Validate/Build
 if [ "$VALIDATE_ONLY" = true ]; then
     echo "✅ Validating code..."
-    # For validation, we don't need output file
+    # For validation, we use the same command but with a temp output file
     VALIDATE_CMD=("${BUILD_CMD[@]}")
-    # Remove output parameter for validation
-    VALIDATE_CMD=("${VALIDATE_CMD[@]/--output}")
-    VALIDATE_CMD=("${VALIDATE_CMD[@]/build\/analog-face.prg}")
-    
-    echo "Running validation: ${VALIDATE_CMD[*]}"
-    if ! "${VALIDATE_CMD[@]}"; then
+    # Replace output with a temp file for validation
+    for i in "${!VALIDATE_CMD[@]}"; do
+        if [[ "${VALIDATE_CMD[$i]}" == "build/analog-face.prg" ]]; then
+            VALIDATE_CMD[$i]="/tmp/validation.prg"
+        fi
+    done
+else
+    echo "🔨 Building watch face..."
+fi
+
+echo "Running command:"
+if [ "$VALIDATE_ONLY" = true ]; then
+    echo "${VALIDATE_CMD[*]}"
+else
+    echo "${BUILD_CMD[*]}"
+fi
+echo ""
+
+if [ "$VALIDATE_ONLY" = true ]; then
+    if "${VALIDATE_CMD[@]}"; then
+        rm -f /tmp/validation.prg
+        echo "✅ Code validation passed!"
+        echo ""
+        echo "🎉 Validation complete! Code is ready for building."
+    else
         echo "❌ Code validation failed!"
         exit 1
     fi
-    echo "✅ Code validation passed!"
-    echo ""
-    echo "🎉 Validation complete! Code is ready for building."
-    exit 0
 else
-    echo "🔨 Building watch face..."
-    echo "Running build command:"
-    echo "${BUILD_CMD[*]}"
-    echo ""
-    
     if "${BUILD_CMD[@]}"; then
         echo ""
         echo "🎉 Build successful!"
