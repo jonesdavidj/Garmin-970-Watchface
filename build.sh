@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Garmin Watch Face Build Script
+# Garmin Watch Face Build Script for SDK 8.1.1
 # This script builds your analog watch face for Forerunner 970
 # Usage: ./build.sh [options]
 # Options:
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help)
-            echo "Garmin Watch Face Build Script"
+            echo "Garmin Watch Face Build Script for SDK 8.1.1"
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "=== Garmin Analog Watch Face Build ==="
+echo "=== Garmin Analog Watch Face Build (SDK 8.1.1) ==="
 if [ "$VALIDATE_ONLY" = true ]; then
     echo "🔍 Code validation mode"
 else
@@ -135,100 +135,131 @@ for file in "${required_files[@]}"; do
     fi
 done
 
+# Check for API database files in SDK
+API_DB="$CIQ_HOME/bin/api.db"
+API_MIR="$CIQ_HOME/bin/api.mir"
+DEVICES_XML="$CIQ_HOME/bin/devices.xml"
+
+if [ ! -f "$API_DB" ]; then
+    echo "❌ Warning: API database not found at $API_DB"
+    echo "Available files in SDK bin:"
+    ls -la $CIQ_HOME/bin/
+fi
+
 echo "✅ All required files found"
 
-# Validation command - SDK 8.x uses different syntax
-VALIDATE_CMD=(
-    "$CIQ_HOME/bin/monkeyc"
-    "-l" "2"
-    "-m" "manifest.xml"
-    "-d" "fr970"
-    "-o" "build/analog-face.prg"
-    "-w"
-)
-# "--sdk" "$CIQ_HOME"
-    
-# Add source files
+# Build source file list
+SOURCE_FILES=()
 for source_file in source/*.mc; do
     if [ -f "$source_file" ]; then
-        VALIDATE_CMD+=("$source_file")
+        SOURCE_FILES+=("$source_file")
     fi
 done
 
-# Validate code first
-echo "✅ Validating code..."
-echo "Running: ${VALIDATE_CMD[*]}"
-if ! "${VALIDATE_CMD[@]}"; then
-    echo "❌ Code validation failed!"
-    exit 1
+# Build resource file list (if any)
+RESOURCE_FILES=()
+if [ -f "resources/layouts.xml" ]; then
+    RESOURCE_FILES+=("resources/layouts.xml")
+fi
+if [ -f "resources/strings.xml" ]; then
+    RESOURCE_FILES+=("resources/strings.xml")
 fi
 
-echo "✅ Code validation passed!"
+# Validation/Build command for SDK 8.1.1
+echo "✅ Preparing build command..."
 
-# Exit here if only validating
-if [ "$VALIDATE_ONLY" = true ]; then
-    echo ""
-    echo "🎉 Validation complete! Code is ready for building."
-    exit 0
-fi
-
-# Build the watch face
-echo "🔨 Building watch face..."
-
-# Build command for SDK 8.x
 BUILD_CMD=(
     "$CIQ_HOME/bin/monkeyc"
     "--output" "build/analog-face.prg"
-    "--manifest" "manifest.xml"
     "--device" "fr970"
-    "--sdk" "$CIQ_HOME"
     "--warn"
-    "--private-key" "$CIQ_HOME/bin/developer_key.der"
+    "--typecheck" "2"
 )
 
+# Add API files if they exist
+if [ -f "$API_DB" ]; then
+    BUILD_CMD+=("--apidb" "$API_DB")
+fi
+
+if [ -f "$API_MIR" ]; then
+    BUILD_CMD+=("--apimir" "$API_MIR")
+fi
+
+# Add devices.xml if it exists
+if [ -f "$DEVICES_XML" ]; then
+    BUILD_CMD+=("--devices" "$DEVICES_XML")
+fi
+
+# Add private key for signing (only for actual build, not validation)
+if [ "$VALIDATE_ONLY" = false ] && [ -f "$CIQ_HOME/bin/developer_key.der" ]; then
+    BUILD_CMD+=("--private-key" "$CIQ_HOME/bin/developer_key.der")
+fi
+
 # Add source files
-for source_file in source/*.mc; do
-    if [ -f "$source_file" ]; then
-        BUILD_CMD+=("$source_file")
-    fi
-done
+BUILD_CMD+=("${SOURCE_FILES[@]}")
 
-echo "Running build command:"
-echo "${BUILD_CMD[*]}"
-echo ""
+# Add resource files if any
+if [ ${#RESOURCE_FILES[@]} -gt 0 ]; then
+    BUILD_CMD+=("--rez" "${RESOURCE_FILES[@]}")
+fi
 
-if "${BUILD_CMD[@]}"; then
-    echo ""
-    echo "🎉 Build successful!"
-    echo "📦 Output file: build/analog-face.prg"
+# Run validation/build
+if [ "$VALIDATE_ONLY" = true ]; then
+    echo "✅ Validating code..."
+    # For validation, we don't need output file
+    VALIDATE_CMD=("${BUILD_CMD[@]}")
+    # Remove output parameter for validation
+    VALIDATE_CMD=("${VALIDATE_CMD[@]/--output}")
+    VALIDATE_CMD=("${VALIDATE_CMD[@]/build\/analog-face.prg}")
     
-    # Show file info
-    if [ -f "build/analog-face.prg" ]; then
-        FILE_SIZE=$(ls -lh build/analog-face.prg | awk '{print $5}')
-        echo "📏 File size: $FILE_SIZE"
-        
-        # Show file timestamp
-        FILE_TIME=$(ls -l build/analog-face.prg | awk '{print $6, $7, $8}')
-        echo "🕒 Built: $FILE_TIME"
+    echo "Running validation: ${VALIDATE_CMD[*]}"
+    if ! "${VALIDATE_CMD[@]}"; then
+        echo "❌ Code validation failed!"
+        exit 1
     fi
-    
+    echo "✅ Code validation passed!"
     echo ""
-    echo "📋 Build summary:"
-    ls -la build/
-    
-    echo ""
-    echo "🚀 Installation instructions:"
-    echo "1. Connect your Forerunner 970 to your computer"
-    echo "2. Copy build/analog-face.prg to GARMIN/APPS folder on your watch"
-    echo "3. Safely eject your watch"
-    echo "4. On your watch: Settings > Watch Face > Select your watchface"
-    echo ""
-    echo "💡 Pro tip: You can also test in the simulator first:"
-    echo "   connectiq -d fr970 build/analog-face.prg"
-    
+    echo "🎉 Validation complete! Code is ready for building."
+    exit 0
 else
+    echo "🔨 Building watch face..."
+    echo "Running build command:"
+    echo "${BUILD_CMD[*]}"
     echo ""
-    echo "❌ Build failed!"
-    echo "Check the error messages above for details"
-    exit 1
+    
+    if "${BUILD_CMD[@]}"; then
+        echo ""
+        echo "🎉 Build successful!"
+        echo "📦 Output file: build/analog-face.prg"
+        
+        # Show file info
+        if [ -f "build/analog-face.prg" ]; then
+            FILE_SIZE=$(ls -lh build/analog-face.prg | awk '{print $5}')
+            echo "📏 File size: $FILE_SIZE"
+            
+            # Show file timestamp
+            FILE_TIME=$(ls -l build/analog-face.prg | awk '{print $6, $7, $8}')
+            echo "🕒 Built: $FILE_TIME"
+        fi
+        
+        echo ""
+        echo "📋 Build summary:"
+        ls -la build/
+        
+        echo ""
+        echo "🚀 Installation instructions:"
+        echo "1. Connect your Forerunner 970 to your computer"
+        echo "2. Copy build/analog-face.prg to GARMIN/APPS folder on your watch"
+        echo "3. Safely eject your watch"
+        echo "4. On your watch: Settings > Watch Face > Select your watchface"
+        echo ""
+        echo "💡 Pro tip: You can also test in the simulator first:"
+        echo "   connectiq -d fr970 build/analog-face.prg"
+        
+    else
+        echo ""
+        echo "❌ Build failed!"
+        echo "Check the error messages above for details"
+        exit 1
+    fi
 fi

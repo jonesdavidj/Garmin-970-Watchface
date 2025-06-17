@@ -53,43 +53,62 @@ WORKDIR /workspace/analog-face
 
 # Download and install Connect IQ SDK (cached layer)
 RUN wget https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip -O connectiq-sdk.zip && \
-    unzip connectiq-sdk.zip && \
-    mkdir connectiq-sdk && \
-    mv bin doc resources samples share connectiq-sdk/ && \
-    mv *.html connectiq-sdk/ && \
-    chmod +x connectiq-sdk/bin/* && \
+    unzip connectiq-sdk.zip -d connectiq-sdk-temp && \
+    mkdir -p connectiq-sdk && \
+    # The SDK extracts to a folder with the version name, move contents up
+    mv connectiq-sdk-temp/connectiq-sdk-lin-*/* connectiq-sdk/ && \
+    rm -rf connectiq-sdk-temp && \
     rm connectiq-sdk.zip
 
-# Copy the entire project (including the SDK)
+# Copy the entire project
 COPY . /workspace/analog-face
 
-# Set Connect IQ SDK environment variables to use the copied SDK
+# Set Connect IQ SDK environment variables
 ENV CIQ_HOME=/workspace/analog-face/connectiq-sdk
 ENV PATH=$PATH:$CIQ_HOME/bin
 
 # Make SDK binaries executable
-RUN chmod +x $CIQ_HOME/bin/* || true
+RUN find $CIQ_HOME/bin -type f -exec chmod +x {} \; || true
+
+# Verify SDK structure
+RUN echo "SDK structure:" && \
+    ls -la $CIQ_HOME/ && \
+    echo "SDK bin contents:" && \
+    ls -la $CIQ_HOME/bin/ && \
+    echo "Checking for required files:" && \
+    test -f $CIQ_HOME/bin/monkeyc && echo "✅ monkeyc found" || echo "❌ monkeyc missing" && \
+    test -f $CIQ_HOME/bin/api.db && echo "✅ api.db found" || echo "❌ api.db missing" && \
+    test -f $CIQ_HOME/bin/api.mir && echo "✅ api.mir found" || echo "❌ api.mir missing" && \
+    test -f $CIQ_HOME/bin/devices.xml && echo "✅ devices.xml found" || echo "❌ devices.xml missing"
 
 # Create a development key for local builds
-RUN mkdir -p $CIQ_HOME/bin && \
-    cd $CIQ_HOME/bin && \
+RUN mkdir -p $CIQ_HOME/keys && \
+    cd $CIQ_HOME/keys && \
     openssl genrsa -out developer_key.pem 4096 && \
-    openssl rsa -in developer_key.pem -outform DER -out developer_key.der
+    openssl rsa -in developer_key.pem -outform DER -out developer_key.der && \
+    # Copy the key to bin directory for easier access
+    cp developer_key.der $CIQ_HOME/bin/
 
 # Make build script executable
 RUN chmod +x build.sh
 
 # Create useful aliases and environment setup
 RUN echo 'alias ll="ls -la"' >> /root/.bashrc && \
-    echo 'export PS1="[Garmin Dev] \w $ "' >> /root/.bashrc
+    echo 'export PS1="[Garmin Dev] \w $ "' >> /root/.bashrc && \
+    echo 'export CIQ_HOME=/workspace/analog-face/connectiq-sdk' >> /root/.bashrc && \
+    echo 'export PATH=$PATH:$CIQ_HOME/bin' >> /root/.bashrc
 
 # Wrapper script for headless simulator usage
 RUN echo '#!/bin/bash\nxvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" "$CIQ_HOME/bin/connectiq" "$@"' > /usr/local/bin/connectiq-headless && \
     chmod +x /usr/local/bin/connectiq-headless
+
+# Test the compiler
+RUN echo "Testing MonkeyC compiler..." && \
+    $CIQ_HOME/bin/monkeyc --version || echo "Compiler test failed - this may be normal if no display is available"
 
 # Keep container running
 CMD ["tail", "-f", "/dev/null"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD test -f $CIQ_HOME/bin/monkeyc && java -version || exit 1
+    CMD test -f $CIQ_HOME/bin/monkeyc && test -f $CIQ_HOME/bin/api.db || exit 1

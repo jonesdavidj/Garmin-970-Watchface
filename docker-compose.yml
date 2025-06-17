@@ -9,6 +9,19 @@ services:
     tty: true
     command: /bin/bash
     environment:
-      - CIQ_HOME=/workspace/analog-face/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f
+      - CIQ_HOME=/workspace/analog-face/connectiq-sdk
       - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/workspace/analog-face/connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f/bin
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/workspace/analog-face/connectiq-sdk/bin
+    volumes:
+      # Optional: mount a volume for persistent build outputs
+      - garmin-builds:/workspace/analog-face/build
+    networks:
+      - garmin-dev-network
+
+volumes:
+  garmin-builds:
+    driver: local
+
+networks:
+  garmin-dev-network:
+    driver: bridge
