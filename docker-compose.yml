@@ -15,7 +15,7 @@ services:
     volumes:
       # Optional: mount a volume for persistent build outputs
       - garmin-builds:/workspace/analog-face/build
-      - hs_dev_mount:/external/hs_dev:ro
+      - hs_dev_mount:/mnt/hs_dev:ro
     networks:
       - garmin-dev-network
 

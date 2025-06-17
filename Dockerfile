@@ -21,9 +21,15 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 RUN echo "📦 Extracting Garmin SDK..." && \
-    ls -lh /external/hs_dev && \
-    tar --no-same-owner -xvzf /external/hs_dev/GarminSDK.tgz && \
-    echo "📁 Listing current directory after tar:" && \
+    ls -lh /mnt/hs_dev
+RUN if [ ! -f /mnt/hs_dev/GarminSDK.tgz ]; then \
+      echo "❌ GarminSDK.tgz not found in /mnt/hs_dev"; \
+      exit 1; \
+    else \
+      echo "✅ GarminSDK.tgz found, proceeding with extraction"; \
+      tar --no-same-owner -xvzf /mnt/hs_dev/GarminSDK.tgz && \
+    fi
+RUN echo "📂 Listing current directory after extraction:" && \  
     ls -l && \
     if [ -d "ConnectIQ" ]; then \
       mv ConnectIQ connectiq-sdk && echo "✅ SDK moved to connectiq-sdk/"; \
