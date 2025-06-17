@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
 # Copy project files
 COPY . .
 RUN chmod +x setup.sh build.sh
+
 # Set environment
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH=$PATH:$CIQ_HOME/bin
