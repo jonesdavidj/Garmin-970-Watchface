@@ -2,6 +2,6 @@
 <devices>
   <device>
     <name>fr970</name>
-    <path>fr970</path>
+    <path>$(DEVICE_DIR)fr970</path>
   </device>
 </devices>
