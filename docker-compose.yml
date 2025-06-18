@@ -18,6 +18,7 @@ services:
       - garmin-dev-network
     environment:
      - TZ=Europe/London
+    tty: true
 
 volumes:
   garmin-builds:
