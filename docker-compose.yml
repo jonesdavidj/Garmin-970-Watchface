@@ -5,21 +5,19 @@ services:
     build: .
     container_name: garmin-watchface-dev
     working_dir: /workspace/analog-face
-    environment:
-      - USER=ubuntu
-      - PASSWORD=ubuntu
-    ports:
-      - "6080:80"     # for browser-based GUI
+    platform: linux/x86_64
+    restart: unless-stopped
     volumes:
       # Optional: mount a volume for persistent build outputs
       - garmin-builds:/workspace/analog-face/build
       - hs_dev_mount:/mnt/hs_dev:ro
+    ports:
+      - "6080:80"     # for browser-based GUI
     networks:
       - garmin-dev-network
-    stdin_open: true
-    tty: true
-    command: tail -f /dev/null
-    
+    environment:
+     - TZ=Europe/London
+
 volumes:
   garmin-builds:
     driver: local
