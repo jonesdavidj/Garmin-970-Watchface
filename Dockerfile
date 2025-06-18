@@ -10,18 +10,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     bash \
     ca-certificates \
-    libxrender1 \
-    libxtst6 \
-    libxi6 \
-    libfreetype6 \
-    libfontconfig1 \
-    libsecret-1-0 \
     libusb-1.0-0 \
-    libgtk-3-0 \
-    libcanberra-gtk-module \
-    libnss3 \
-    libxss1 \
-    libasound2 \
+    libsecret-1-0 \
     libwebkit2gtk-4.0-37 \
     && rm -rf /var/lib/apt/lists/*
 
