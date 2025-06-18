@@ -2,10 +2,11 @@ version: '3.8'
 
 services:
   garmin-dev:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: garmin-watchface-dev
     working_dir: /workspace/analog-face
-    platform: linux/x86_64
     restart: unless-stopped
     volumes:
       # Optional: mount a volume for persistent build outputs
