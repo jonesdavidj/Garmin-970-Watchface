@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM dorowu/ubuntu-desktop-lxde-vnc
 
 WORKDIR /workspace/analog-face
 

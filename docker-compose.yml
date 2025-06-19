@@ -19,7 +19,6 @@ services:
     environment:
      - TZ=Europe/London
     tty: true
-    command: /startup.sh
     
 volumes:
   garmin-builds:
