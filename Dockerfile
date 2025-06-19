@@ -2,8 +2,15 @@ FROM dorowu/ubuntu-desktop-lxde-vnc:focal
 
 WORKDIR /workspace/analog-face
 
-RUN apt-get update || (cat /etc/apt/sources.list && cat /var/lib/apt/lists/*Release* && exit 1)
-
+RUN apt-get update || ( \
+    echo "------ /etc/apt/sources.list ------" && \
+    cat /etc/apt/sources.list && \
+    echo "------ /var/lib/apt/lists/ (ls only) ------" && \
+    ls -la /var/lib/apt/lists/ && \
+    echo "------ DNS Test ------" && \
+    ping -c 2 archive.ubuntu.com || echo "DNS failed" && \
+    exit 1 \
+)
 # Rebuild the apt sources to ensure compatibility
 RUN echo "deb http://archive.ubuntu.com/ubuntu focal main universe restricted multiverse" > /etc/apt/sources.list && \
     echo "deb http://archive.ubuntu.com/ubuntu focal-updates main universe restricted multiverse" >> /etc/apt/sources.list && \
