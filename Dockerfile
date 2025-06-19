@@ -2,7 +2,7 @@ FROM dorowu/ubuntu-desktop-lxde-vnc
 
 WORKDIR /workspace/analog-face
 
-RUN apt-get update && apt-get install -y
+RUN apt-get update
 RUN apt install -y openjdk-11-jdk
 RUN apt install -y unzip
 RUN apt install -y curl
