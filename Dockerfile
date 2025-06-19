@@ -2,11 +2,10 @@ FROM dorowu/ubuntu-desktop-lxde-vnc
 
 WORKDIR /workspace/analog-face
 
-RUN apt-get update
+RUN apt-get update && apt-get install -y bash
 RUN apt install -y openjdk-11-jdk
 RUN apt install -y unzip
 RUN apt install -y curl
-RUN apt install -y bash
 RUN apt install -y ca-certificates
 RUN apt install -y libusb-1.0-0
 RUN apt install -y libsecret-1-0
