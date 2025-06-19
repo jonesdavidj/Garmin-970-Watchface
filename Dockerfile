@@ -7,9 +7,6 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu jammy main universe restricted mu
     echo "deb http://security.ubuntu.com/ubuntu jammy-security main universe restricted multiverse" >> /etc/apt/sources.list
 
 
-RUN apt-get update && apt-get install -y software-properties-common
-RUN add-apt-repository universe
-
 RUN apt-get update && apt-get install -y bash
 RUN apt install -y openjdk-11-jdk
 RUN apt install -y unzip
