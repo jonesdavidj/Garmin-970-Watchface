@@ -10,12 +10,13 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     libusb-1.0-0 \
     libsecret-1-0 \
-    libwebkit2gtk-4.0-37 \
     libgtk-3-0 \
     libnss3 \
     libxss1 \
     libasound2 \
     && rm -rf /var/lib/apt/lists/*
+
+#        libwebkit2gtk-4.0-37 \
 
 COPY . .
 RUN chmod +x setup.sh build.sh
