@@ -3,13 +3,15 @@ FROM dorowu/ubuntu-desktop-lxde-vnc:focal
 WORKDIR /workspace/analog-face
 
 # Rebuild the apt sources to ensure compatibility
-RUN rm -f /etc/apt/sources.list && \
-    echo "deb http://archive.ubuntu.com/ubuntu focal main universe restricted multiverse" > /etc/apt/sources.list && \
-    echo "deb http://archive.ubuntu.com/ubuntu focal-updates main universe restricted multiverse" >> /etc/apt/sources.list && \
-    echo "deb http://security.ubuntu.com/ubuntu focal-security main universe restricted multiverse" >> /etc/apt/sources.list && \
-    apt-get clean && \
-    apt-get update && \
-    apt-get install -y bash
+RUN bash -c '\
+  echo "deb http://archive.ubuntu.com/ubuntu focal main universe restricted multiverse" > /etc/apt/sources.list && \
+  echo "deb http://archive.ubuntu.com/ubuntu focal-updates main universe restricted multiverse" >> /etc/apt/sources.list && \
+  echo "deb http://security.ubuntu.com/ubuntu focal-security main universe restricted multiverse" >> /etc/apt/sources.list \
+' && \
+apt-get clean && \
+apt-get update && \
+apt-get install -y bash
+
 
 RUN apt install -y openjdk-11-jdk
 RUN apt install -y unzip
