@@ -2,7 +2,10 @@ FROM dorowu/ubuntu-desktop-lxde-vnc
 
 WORKDIR /workspace/analog-face
 
-RUN cat /etc/apt/sources.list
+RUN echo "deb http://archive.ubuntu.com/ubuntu jammy main universe restricted multiverse" > /etc/apt/sources.list && \
+    echo "deb http://archive.ubuntu.com/ubuntu jammy-updates main universe restricted multiverse" >> /etc/apt/sources.list && \
+    echo "deb http://security.ubuntu.com/ubuntu jammy-security main universe restricted multiverse" >> /etc/apt/sources.list
+
 
 RUN apt-get update && apt-get install -y software-properties-common
 RUN add-apt-repository universe
